@@ -1,0 +1,38 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Удаление заказа{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Удалить заказ</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Вы действительно хотите удалить заказ <strong>#{{ order.id }}</strong>?
+                </p>
+                <ul class="list-group mb-4">
+                    <li class="list-group-item"><strong>Товар:</strong> {{ order.product_name }}</li>
+                    <li class="list-group-item"><strong>Количество:</strong> {{ order.quantity }}</li>
+                    <li class="list-group-item"><strong>Статус:</strong> {{ order.status }}</li>
+                    <li class="list-group-item"><strong>Пункт выдачи:</strong> {{ order.pickup_point }}</li>
+                </ul>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                        <a href="{% url 'orders:order_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -7,14 +7,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="bi bi-list-ul"></i> Каталог электрозапчастей</h1>
 
-    {% if user.is_authenticated and user.is_superuser %}
+    {% if user_role == 'admin' %}
     <a href="{% url 'products:product_create' %}" class="btn btn-success">
         <i class="bi bi-plus-circle"></i> Добавить электрозапчасть
     </a>
     {% endif %}
 </div>
 
-<!-- Фильтры и поиск (только для администратора) -->
 {% if user_role == 'admin' %}
 <div class="card mb-4">
     <div class="card-body">
@@ -41,10 +40,8 @@
                 <label for="sort" class="form-label">Сортировка</label>
                 <select class="form-select" id="sort" name="sort">
                     <option value="name" {% if sort_by == 'name' %}selected{% endif %}>По названию</option>
-                    <option value="quantity_asc" {% if sort_by == 'quantity_asc' %}selected{% endif %}>По количеству
-                        (возр.)</option>
-                    <option value="quantity_desc" {% if sort_by == 'quantity_desc' %}selected{% endif %}>По количеству
-                        (убыв.)</option>
+                    <option value="quantity_asc" {% if sort_by == 'quantity_asc' %}selected{% endif %}>По количеству (возр.)</option>
+                    <option value="quantity_desc" {% if sort_by == 'quantity_desc' %}selected{% endif %}>По количеству (убыв.)</option>
                 </select>
             </div>
 
@@ -58,7 +55,6 @@
 </div>
 {% endif %}
 
-<!-- Таблица товаров -->
 <div class="card">
     <div class="card-body">
         {% if page_obj %}
@@ -76,7 +72,7 @@
                         <th>Ед. изм.</th>
                         <th>Количество</th>
                         <th>Скидка</th>
-                        {% if user.is_authenticated and user.is_superuser %}
+                        {% if user_role == 'admin' %}
                         <th>Действия</th>
                         {% endif %}
                     </tr>
@@ -84,8 +80,8 @@
                 <tbody>
                     {% for product in page_obj %}
                     <tr
-                        class="product-row {% if product.discount > 15 %}discount-high{% endif %} {% if not product.is_available %}out-of-stock{% endif %} {% if user.is_authenticated and user.is_superuser %}admin-editable-row{% endif %}"
-                        {% if user.is_authenticated and user.is_superuser %}data-edit-url="{% url 'products:product_update' product.pk %}"{% endif %}>
+                        class="product-row {% if product.discount > 15 %}discount-high{% endif %} {% if not product.is_available %}out-of-stock{% endif %} {% if user_role == 'admin' %}admin-editable-row{% endif %}"
+                        {% if user_role == 'admin' %}data-edit-url="{% url 'products:product_update' product.pk %}"{% endif %}>
                         <td>
                             {% if product.image %}
                             <img src="{{ product.image.url }}" alt="{{ product.name }}"
@@ -113,7 +109,7 @@
                         <td>{{ product.unit.name }}</td>
                         <td>{{ product.quantity }}</td>
                         <td>{{ product.discount }}%</td>
-                        {% if user.is_authenticated and user.is_superuser %}
+                        {% if user_role == 'admin' %}
                         <td>
                             <div class="btn-group" role="group">
                                 <a href="{% url 'products:product_update' product.pk %}"
@@ -121,8 +117,7 @@
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <a href="{% url 'products:product_delete' product.pk %}"
-                                    class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Вы уверены, что хотите удалить этот товар?')">
+                                    class="btn btn-sm btn-outline-danger">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
@@ -134,7 +129,6 @@
             </table>
         </div>
 
-        <!-- Пагинация -->
         {% if page_obj.has_other_pages %}
         <nav aria-label="Пагинация товаров">
             <ul class="pagination justify-content-center">
@@ -152,23 +146,24 @@
                 <li class="page-item active">
                     <span class="page-link">{{ num }}</span>
                 </li>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
                     <a class="page-link"
                         href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
                         {{ num }}
                     </a>
-                    </li>
-                    {% endif %}
-                    {% endfor %}
+                </li>
+                {% endif %}
+                {% endfor %}
 
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link"
-                            href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
-                            Следующая
-                        </a>
-                    </li>
-                    {% endif %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if supplier_filter %}&supplier={{ supplier_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                        Следующая
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
         {% endif %}
@@ -176,12 +171,11 @@
         <div class="text-center py-5">
             <i class="bi bi-inbox-fill text-muted" style="font-size: 3rem;"></i>
             <h4 class="text-muted mt-3">Электрозапчасти не найдены</h4>
-            <p class="text-muted">Попробуйте изменить параметры поиска или фильтрации.</p>
+            <p class="text-muted">Сейчас каталог пуст. Это не ошибка, просто товары ещё не добавлены.</p>
         </div>
         {% endif %}
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -194,15 +188,22 @@
 
     let searchTimeoutId = null;
 
-    searchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeoutId);
-        searchTimeoutId = setTimeout(() => {
-            productFiltersForm.submit();
-        }, 300);
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeoutId);
+            searchTimeoutId = setTimeout(() => {
+                productFiltersForm.submit();
+            }, 300);
+        });
+    }
 
-    supplierSelect.addEventListener('change', () => productFiltersForm.submit());
-    sortSelect.addEventListener('change', () => productFiltersForm.submit());
+    if (supplierSelect) {
+        supplierSelect.addEventListener('change', () => productFiltersForm.submit());
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => productFiltersForm.submit());
+    }
 
     const adminRows = document.querySelectorAll('.admin-editable-row');
     adminRows.forEach((row) => {

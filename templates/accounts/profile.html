@@ -52,20 +52,14 @@
 
                 <div class="mb-3">
                     <h6><i class="bi bi-shield-check"></i> Роль в системе</h6>
-                    {% if user.is_superuser %}
-                        <span class="badge bg-danger">Администратор</span>
-                    {% elif user.groups.all %}
-                        {% for group in user.groups.all %}
-                            {% if group.name == 'Менеджеры' %}
-                                <span class="badge bg-warning text-dark">Менеджер</span>
-                            {% elif group.name == 'Клиенты' %}
-                                <span class="badge bg-info">Клиент</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ group.name }}</span>
-                            {% endif %}
-                        {% endfor %}
+                    {% if current_user_role == 'admin' %}
+                    <span class="badge bg-danger">Администратор</span>
+                    {% elif current_user_role == 'manager' %}
+                    <span class="badge bg-warning text-dark">Менеджер</span>
+                    {% elif current_user_role == 'client' %}
+                    <span class="badge bg-info">Клиент</span>
                     {% else %}
-                        <span class="badge bg-light text-dark">Пользователь</span>
+                    <span class="badge bg-secondary">Гость</span>
                     {% endif %}
                 </div>
 
@@ -74,17 +68,17 @@
                     <p class="mb-1">
                         <strong>Последний вход:</strong>
                         {% if user.last_login %}
-                            {{ user.last_login|date:"d.m.Y H:i" }}
+                        {{ user.last_login|date:"d.m.Y H:i" }}
                         {% else %}
-                            Никогда
+                        Никогда
                         {% endif %}
                     </p>
                     <p class="mb-0">
                         <strong>Статус:</strong>
                         {% if user.is_active %}
-                            <span class="text-success">Активен</span>
+                        <span class="text-success">Активен</span>
                         {% else %}
-                            <span class="text-danger">Заблокирован</span>
+                        <span class="text-danger">Заблокирован</span>
                         {% endif %}
                     </p>
                 </div>

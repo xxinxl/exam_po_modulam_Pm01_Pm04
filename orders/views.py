@@ -1,41 +1,100 @@
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from .models import Order
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+
+from accounts.roles import get_user_role, role_required
+
 from .forms import OrderForm
+from .models import Order
 
 
-def get_user_role(user):
-    if user.is_superuser:
-        return 'admin'
-    if user.groups.filter(name='Менеджеры').exists():
-        return 'manager'
-    if user.groups.filter(name='Клиенты').exists():
-        return 'client'
-    return 'guest'
+def get_order_queryset(user):
+    orders = Order.objects.select_related("user", "status", "pickup_point")
+    role = get_user_role(user)
+
+    if role in {"manager", "admin"}:
+        return orders
+
+    if role == "client":
+        return orders.filter(user=user)
+
+    return orders.none()
 
 
-@login_required
+@role_required("client", "manager", "admin")
 def order_list(request):
-    role = get_user_role(request.user)
-
-    if role == 'manager' or role == 'admin':
-        orders = Order.objects.all()
-    elif role == 'client':
-        orders = Order.objects.filter(user=request.user)
-    else:
-        return HttpResponseForbidden()
-
-    return render(request, 'orders/order_list.html', {'orders': orders})
+    return render(
+        request,
+        "orders/order_list.html",
+        {
+            "orders": get_order_queryset(request.user),
+            "user_role": get_user_role(request.user),
+        },
+    )
 
 
-@login_required
+@role_required("client", "manager", "admin")
 def order_create(request):
-    if request.method == 'POST':
-        form = OrderForm(request.POST)
+    if request.method == "POST":
+        form = OrderForm(request.POST, user=request.user)
         if form.is_valid():
             form.save()
-            return redirect('order_list')
+            messages.success(request, "Заказ успешно создан.")
+            return redirect("orders:order_list")
     else:
-        form = OrderForm()
+        form = OrderForm(user=request.user)
 
-    return render(request, 'orders/order_form.html', {'form': form})
+    return render(
+        request,
+        "orders/order_form.html",
+        {
+            "form": form,
+            "title": "Создать заказ",
+            "submit_label": "Сохранить",
+            "user_role": get_user_role(request.user),
+        },
+    )
+
+
+@role_required("client", "manager", "admin")
+def order_update(request, pk):
+    order = get_object_or_404(get_order_queryset(request.user), pk=pk)
+
+    if request.method == "POST":
+        form = OrderForm(request.POST, instance=order, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Заказ успешно обновлен.")
+            return redirect("orders:order_list")
+    else:
+        form = OrderForm(instance=order, user=request.user)
+
+    return render(
+        request,
+        "orders/order_form.html",
+        {
+            "form": form,
+            "title": f"Редактировать заказ #{order.id}",
+            "submit_label": "Обновить",
+            "order": order,
+            "user_role": get_user_role(request.user),
+        },
+    )
+
+
+@role_required("client", "manager", "admin")
+def order_delete(request, pk):
+    order = get_object_or_404(get_order_queryset(request.user), pk=pk)
+
+    if request.method == "POST":
+        order.delete()
+        messages.success(request, "Заказ успешно удален.")
+        return redirect("orders:order_list")
+
+    return render(
+        request,
+        "orders/order_confirm_delete.html",
+        {
+            "order": order,
+            "user_role": get_user_role(request.user),
+        },
+    )

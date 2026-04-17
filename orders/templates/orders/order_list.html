@@ -1,9 +1,72 @@
-<a href="/orders/create/">Создать заказ</a>
+{% extends 'base/base.html' %}
 
-<ul>
-    {% for order in orders %}
-        <li>
-            Заказ {{ order.id }} — {{ order.product_name }} — {{ order.quantity }}
-        </li>
-    {% endfor %}
-</ul>
+{% block title %}Заказы{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            <i class="bi bi-bag-check"></i>
+            {% if user_role == 'client' %}Мои заказы{% else %}Список заказов{% endif %}
+        </h1>
+        <p class="text-muted mb-0">Просмотр и управление заказами согласно роли пользователя.</p>
+    </div>
+    <a href="{% url 'orders:order_create' %}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Создать заказ
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        {% if user_role != 'client' %}
+                        <th>Клиент</th>
+                        {% endif %}
+                        <th>Товар</th>
+                        <th>Количество</th>
+                        <th>Статус</th>
+                        <th>Пункт выдачи</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        {% if user_role != 'client' %}
+                        <td>{{ order.user.get_full_name|default:order.user.username }}</td>
+                        {% endif %}
+                        <td>{{ order.product_name }}</td>
+                        <td>{{ order.quantity }}</td>
+                        <td><span class="badge bg-primary">{{ order.status }}</span></td>
+                        <td>{{ order.pickup_point }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'orders:order_update' order.pk %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'orders:order_delete' order.pk %}" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <h4 class="text-muted mt-3">Заказов пока нет</h4>
+            <p class="text-muted">Создайте первый заказ, чтобы начать работу.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
