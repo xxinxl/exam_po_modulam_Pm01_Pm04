@@ -1,0 +1,9 @@
+<a href="/orders/create/">Создать заказ</a>
+
+<ul>
+    {% for order in orders %}
+        <li>
+            Заказ {{ order.id }} — {{ order.product_name }} — {{ order.quantity }}
+        </li>
+    {% endfor %}
+</ul>
